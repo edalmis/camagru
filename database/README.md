@@ -11,9 +11,7 @@ This directory contains database initialization and migration scripts for the Ca
 
 - **Host**: camagru_db (Docker service)
 - **Port**: 3306
-- **Database**: camagru
-- **User**: camagru
-- **Password**: camagru
+- **Database/User/Password**: loaded from local `.env`
 
 ## Setup
 
@@ -22,17 +20,17 @@ The database is automatically created by Docker Compose when the containers star
 To manually initialize or reset the database:
 
 ```bash
-docker-compose exec db mysql -u camagru -pcamagru camagru < database/init.sql
+docker-compose exec db sh -lc 'mysql -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" "$MYSQL_DATABASE"' < database/init.sql
 ```
 
 To access the database directly:
 
 ```bash
-docker-compose exec db mysql -u camagru -pcamagru camagru
+docker-compose exec db sh -lc 'mysql -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" "$MYSQL_DATABASE"'
 ```
 
 Or with root access:
 
 ```bash
-docker-compose exec db mysql -u root -proot camagru
+docker-compose exec db sh -lc 'mysql -u root -p"$MYSQL_ROOT_PASSWORD" "$MYSQL_DATABASE"'
 ```

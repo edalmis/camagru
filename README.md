@@ -38,18 +38,22 @@ A web application for photo manipulation and sharing.
    cd camagru
    ```
 
-2. **Start Docker containers**
+2. **Create local environment file**
+   ```bash
+   cp .env.example .env
+   ```
+
+   Fill in your local credentials and secrets in `.env`.
+
+3. **Start Docker containers**
    ```bash
    docker-compose up -d
    ```
 
-3. **Initialize the database**
-   The database is automatically created by Docker Compose with the following credentials:
-   - **Database**: camagru
-   - **User**: camagru
-   - **Password**: camagru
+4. **Initialize the database**
+   The database is automatically created by Docker Compose using values from your local `.env` file.
 
-4. **Access the application**
+5. **Access the application**
    Open your browser and navigate to: `http://localhost:8080`
 
 ## Development
@@ -65,7 +69,7 @@ See [database/README.md](database/README.md) for database operations and migrati
 docker-compose exec php bash
 
 # Access database
-docker-compose exec db mysql -u camagru -pcamagru camagru
+docker-compose exec db sh -lc 'mysql -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" "$MYSQL_DATABASE"'
 
 # View logs
 docker-compose logs -f [service-name]

@@ -1,0 +1,10 @@
+# Local environment secrets
+.env
+
+# Dependencies
+vendor/
+node_modules/
+
+# Runtime artifacts
+uploads/*
+!uploads/.gitkeep

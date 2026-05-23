@@ -5,10 +5,19 @@
  * Database connection settings for the Camagru application
  */
 
+function envOrFail($key) {
+    $value = getenv($key);
+    if ($value === false || trim($value) === '') {
+        throw new RuntimeException('Missing required environment variable: ' . $key);
+    }
+
+    return $value;
+}
+
 define('DB_HOST', getenv('DB_HOST') ?: 'camagru_db');
-define('DB_USER', getenv('DB_USER') ?: 'camagru');
-define('DB_PASS', getenv('DB_PASS') ?: 'camagru');
-define('DB_NAME', getenv('DB_NAME') ?: 'camagru');
+define('DB_USER', envOrFail('DB_USER'));
+define('DB_PASS', envOrFail('DB_PASS'));
+define('DB_NAME', envOrFail('DB_NAME'));
 define('DB_PORT', getenv('DB_PORT') ?: 3306);
 
 /**

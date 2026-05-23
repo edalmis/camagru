@@ -7,6 +7,16 @@ Services:
 
 ## Start
 
+1. Create a local env file:
+
+```bash
+cp .env.example .env
+```
+
+2. Set your local credentials and secrets in `.env`.
+
+3. Start containers:
+
 ```bash
 docker compose up -d --build
 ```
