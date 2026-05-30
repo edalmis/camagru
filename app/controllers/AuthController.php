@@ -140,6 +140,11 @@ final class AuthController
 
     public function logout(): void
     {
+        if (!verifyCsrfToken($_POST['csrf_token'] ?? null)) {
+            setFlash('error', 'Invalid logout request. Please try again.');
+            redirectTo('/profile');
+        }
+
         logoutUser();
         redirectTo('/login');
     }

@@ -16,8 +16,11 @@
 <nav>
     <a href="/">Home</a>
     <?php if (!empty($currentUser ?? null)): ?>
+        <a href="/gallery">Gallery</a>
+        <a href="/gallery/upload">Upload</a>
         <a href="/profile">Profile</a>
         <form action="/logout" method="post" style="display:inline;">
+            <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars(csrfToken(), ENT_QUOTES, 'UTF-8'); ?>">
             <button type="submit">Logout</button>
         </form>
     <?php else: ?>

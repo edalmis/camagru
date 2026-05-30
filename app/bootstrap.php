@@ -93,6 +93,36 @@ function logoutUser(): void
     session_destroy();
 }
 
+function csrfToken(): string
+{
+    if (empty($_SESSION['csrf_token'])) {
+        $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+    }
+
+    return $_SESSION['csrf_token'];
+}
+
+function verifyCsrfToken(?string $token): bool
+{
+    if (!is_string($token) || !isset($_SESSION['csrf_token'])) {
+        return false;
+    }
+
+    $submittedToken = trim($token);
+    $sessionToken = trim((string) $_SESSION['csrf_token']);
+
+    return $submittedToken !== '' && $sessionToken !== '' && hash_equals($sessionToken, $submittedToken);
+}
+
+function sanitizeFileName(string $fileName): string
+{
+    $baseName = pathinfo($fileName, PATHINFO_FILENAME);
+    $baseName = preg_replace('/[^a-zA-Z0-9_-]+/', '-', $baseName) ?? 'upload';
+    $baseName = trim($baseName, '-');
+
+    return $baseName === '' ? 'upload' : $baseName;
+}
+
 function renderView(string $viewPath, array $data = []): void
 {
     $viewFile = __DIR__ . '/views/' . $viewPath . '.php';

@@ -5,13 +5,23 @@ This directory contains database initialization and migration scripts for the Ca
 ## Structure
 
 - `init.sql` - Initial database setup (charset and collation)
-- `migrations/` - Individual table creation scripts (to be added)
+- `migrations/` - Individual table creation scripts
+
+## Tables
+
+- `users` - Registered accounts and password hashes
+- `images` - Uploaded image metadata and ownership
+- `image_likes` - Per-user likes for each image
+- `image_comments` - Per-user comments for each image
+- `auth_tokens` - Optional persistent auth/remember-me tokens
 
 ## Database Details
 
 - **Host**: camagru_db (Docker service)
 - **Port**: 3306
 - **Database/User/Password**: loaded from local `.env`
+
+The application still uses PHP sessions for login state; `auth_tokens` is reserved for future remember-me/session-token support.
 
 ## Setup
 

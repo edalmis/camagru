@@ -1,0 +1,11 @@
+CREATE TABLE IF NOT EXISTS images (
+	id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+	user_id INT UNSIGNED NOT NULL,
+	file_path VARCHAR(255) NOT NULL,
+	original_name VARCHAR(255) NOT NULL,
+	mime_type VARCHAR(100) NOT NULL,
+	created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+	PRIMARY KEY (id),
+	KEY idx_images_user_id (user_id),
+	CONSTRAINT fk_images_user_id FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
