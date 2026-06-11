@@ -23,7 +23,10 @@ final class Router
 
         if (!isset($methodRoutes[$path])) {
             http_response_code(404);
-            require __DIR__ . '/../views/errors/404.php';
+            renderView('errors/404', [
+                'pageTitle' => 'Page not found',
+                'currentUser' => currentUser(),
+            ]);
             return;
         }
 

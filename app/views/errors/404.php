@@ -1,12 +1,6 @@
-<!doctype html>
-<html lang="en">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Page not found</title>
-</head>
-<body>
+<section class="card empty-state">
+    <p class="eyebrow">Error</p>
     <h1>404</h1>
     <p>Page not found.</p>
-</body>
-</html>
+    <a class="button button-primary" href="/">Back home</a>
+</section>

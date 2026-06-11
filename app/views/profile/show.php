@@ -1,15 +1,19 @@
-<main>
+<section class="card profile-card">
+    <p class="eyebrow">Account</p>
     <h1>Profile</h1>
 
-    <?php if (!empty($success ?? null)): ?>
-        <p><?php echo htmlspecialchars($success, ENT_QUOTES, 'UTF-8'); ?></p>
-    <?php endif; ?>
-
-    <?php if (!empty($error ?? null)): ?>
-        <p><?php echo htmlspecialchars($error, ENT_QUOTES, 'UTF-8'); ?></p>
-    <?php endif; ?>
-
-    <p>Username: <?php echo htmlspecialchars($currentUser['username'], ENT_QUOTES, 'UTF-8'); ?></p>
-    <p>Email: <?php echo htmlspecialchars($currentUser['email'], ENT_QUOTES, 'UTF-8'); ?></p>
-    <p>Member since: <?php echo htmlspecialchars($currentUser['created_at'], ENT_QUOTES, 'UTF-8'); ?></p>
-</main>
+    <dl class="profile-grid">
+        <div>
+            <dt>Username</dt>
+            <dd><?php echo htmlspecialchars($currentUser['username'], ENT_QUOTES, 'UTF-8'); ?></dd>
+        </div>
+        <div>
+            <dt>Email</dt>
+            <dd><?php echo htmlspecialchars($currentUser['email'], ENT_QUOTES, 'UTF-8'); ?></dd>
+        </div>
+        <div>
+            <dt>Member since</dt>
+            <dd><?php echo htmlspecialchars($currentUser['created_at'], ENT_QUOTES, 'UTF-8'); ?></dd>
+        </div>
+    </dl>
+</section>
