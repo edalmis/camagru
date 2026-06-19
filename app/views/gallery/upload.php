@@ -19,7 +19,7 @@
 
         <div class="file-field">
             <label for="image">Choose image</label>
-            <input id="image" type="file" name="image" accept="image/*" required>
+            <input id="image" type="file" name="image" required>
             <p id="selected-file">No file selected.</p>
         </div>
 
@@ -30,10 +30,16 @@
 <p class="helper-text">Webcam capture support will be added in a later step.</p>
 
 <script>
-    const imageInput = document.getElementById('image');
-    const selectedFile = document.getElementById('selected-file');
+    var imageInput = document.getElementById('image');
+    var selectedFile = document.getElementById('selected-file');
 
-    imageInput.addEventListener('change', () => {
-        selectedFile.textContent = imageInput.files.length > 0 ? imageInput.files[0].name : 'No file selected.';
-    });
+    if (imageInput && selectedFile) {
+        imageInput.onchange = function () {
+            if (imageInput.files && imageInput.files.length > 0) {
+                selectedFile.textContent = 'Selected: ' + imageInput.files[0].name;
+            } else {
+                selectedFile.textContent = 'No file selected.';
+            }
+        };
+    }
 </script>
