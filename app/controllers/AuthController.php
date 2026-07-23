@@ -35,52 +35,25 @@ final class AuthController
             'email' => $email,
         ];
 
-        $errors = $this->validateRegistration($username, $email, $password, $confirmPassword);
-
-        if (!empty($errors)) {
+        try {
+            $user = (new User())->register($username, $email, $password, $confirmPassword);
+            loginUser($user);
+            unset($_SESSION['old']);
+            setFlash('success', 'Account created successfully.');
+            redirectTo('/profile');
+        } catch (ValidationException $exception) {
             renderView('auth/register', [
                 'pageTitle' => 'Register',
-                'errors' => $errors,
+                'errors' => $exception->getErrors(),
                 'old' => $_SESSION['old'],
             ]);
             unset($_SESSION['old']);
             return;
-        }
-
-        $userModel = new User();
-
-        if ($userModel->findByUsername($username) !== null) {
-            renderView('auth/register', [
-                'pageTitle' => 'Register',
-                'errors' => ['Username is already taken.'],
-                'old' => $_SESSION['old'],
-            ]);
-            unset($_SESSION['old']);
-            return;
-        }
-
-        if ($userModel->findByEmail($email) !== null) {
-            renderView('auth/register', [
-                'pageTitle' => 'Register',
-                'errors' => ['Email is already registered.'],
-                'old' => $_SESSION['old'],
-            ]);
-            unset($_SESSION['old']);
-            return;
-        }
-
-        $userId = $userModel->create($username, $email, $password);
-        $user = $userModel->findById($userId);
-
-        if ($user === null) {
+        } catch (Throwable $exception) {
+            error_log('Registration failed: ' . $exception->getMessage());
             setFlash('error', 'Registration failed. Please try again.');
             redirectTo('/register');
         }
-
-        loginUser($user);
-        unset($_SESSION['old']);
-        setFlash('success', 'Account created successfully.');
-        redirectTo('/profile');
     }
 
     public function showLogin(): void
@@ -110,32 +83,25 @@ final class AuthController
 
         $_SESSION['old'] = ['email' => $email];
 
-        if ($email === '' || $password === '') {
+        try {
+            $user = (new User())->authenticate($email, $password);
+            loginUser($user);
+            unset($_SESSION['old']);
+            setFlash('success', 'Welcome back.');
+            redirectTo('/profile');
+        } catch (ValidationException $exception) {
             renderView('auth/login', [
                 'pageTitle' => 'Login',
-                'errors' => ['Email and password are required.'],
+                'errors' => $exception->getErrors(),
                 'old' => $_SESSION['old'],
             ]);
             unset($_SESSION['old']);
             return;
+        } catch (Throwable $exception) {
+            error_log('Login failed: ' . $exception->getMessage());
+            setFlash('error', 'Unable to log in right now. Please try again.');
+            redirectTo('/login');
         }
-
-        $user = (new User())->findByEmail($email);
-
-        if ($user === null || !password_verify($password, $user['password_hash'])) {
-            renderView('auth/login', [
-                'pageTitle' => 'Login',
-                'errors' => ['Invalid email or password.'],
-                'old' => $_SESSION['old'],
-            ]);
-            unset($_SESSION['old']);
-            return;
-        }
-
-        loginUser($user);
-        unset($_SESSION['old']);
-        setFlash('success', 'Welcome back.');
-        redirectTo('/profile');
     }
 
     public function logout(): void
@@ -161,26 +127,4 @@ final class AuthController
         ]);
     }
 
-    private function validateRegistration(string $username, string $email, string $password, string $confirmPassword): array
-    {
-        $errors = [];
-
-        if ($username === '' || strlen($username) < 3 || strlen($username) > 30) {
-            $errors[] = 'Username must be between 3 and 30 characters.';
-        }
-
-        if ($email === '' || filter_var($email, FILTER_VALIDATE_EMAIL) === false) {
-            $errors[] = 'Please enter a valid email address.';
-        }
-
-        if (strlen($password) < 8) {
-            $errors[] = 'Password must be at least 8 characters long.';
-        }
-
-        if ($password !== $confirmPassword) {
-            $errors[] = 'Password confirmation does not match.';
-        }
-
-        return $errors;
-    }
 }

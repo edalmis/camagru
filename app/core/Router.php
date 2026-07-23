@@ -22,16 +22,31 @@ final class Router
         $methodRoutes = $this->routes[$method] ?? [];
 
         if (!isset($methodRoutes[$path])) {
-            http_response_code(404);
-            renderView('errors/404', [
+            if ($this->routeExistsForOtherMethod($path, $method)) {
+                renderErrorPage(405, 'errors/405', [
+                    'pageTitle' => 'Method not allowed',
+                    'currentUser' => currentUser(),
+                ]);
+                return;
+            }
+
+            renderErrorPage(404, 'errors/404', [
                 'pageTitle' => 'Page not found',
                 'currentUser' => currentUser(),
             ]);
             return;
         }
 
-        $handler = $methodRoutes[$path];
-        $handler();
+        try {
+            $handler = $methodRoutes[$path];
+            $handler();
+        } catch (Throwable $exception) {
+            error_log('Unhandled route exception: ' . $exception->getMessage());
+            renderErrorPage(500, 'errors/500', [
+                'pageTitle' => 'Server error',
+                'currentUser' => currentUser(),
+            ]);
+        }
     }
 
     private function normalizePath(string $path): string
@@ -46,5 +61,20 @@ final class Router
         $path = parse_url($requestUri, PHP_URL_PATH) ?: '/';
 
         return $this->normalizePath($path);
+    }
+
+    private function routeExistsForOtherMethod(string $path, string $currentMethod): bool
+    {
+        foreach ($this->routes as $method => $routes) {
+            if ($method === $currentMethod) {
+                continue;
+            }
+
+            if (isset($routes[$path])) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

@@ -4,13 +4,6 @@ declare(strict_types=1);
 
 final class ImageController
 {
-    private const ALLOWED_MIME_TYPES = [
-        'image/jpeg' => 'jpg',
-        'image/png' => 'png',
-        'image/gif' => 'gif',
-        'image/webp' => 'webp',
-    ];
-
     public function gallery(): void
     {
         $user = requireAuthentication();
@@ -48,52 +41,23 @@ final class ImageController
             redirectTo('/gallery/upload');
         }
 
-        if (empty($_FILES['image']) || !is_array($_FILES['image'])) {
-            setFlash('error', 'Please choose an image file to upload.');
+        try {
+            $upload = $_FILES['image'] ?? [];
+            (new Image())->storeUpload((int) $user['id'], $upload);
+            setFlash('success', 'Image uploaded successfully.');
+            redirectTo('/gallery');
+        } catch (ValidationException $exception) {
+            renderView('gallery/upload', [
+                'pageTitle' => 'Upload Image',
+                'currentUser' => $user,
+                'errors' => $exception->getErrors(),
+                'csrfToken' => csrfToken(),
+            ]);
+            return;
+        } catch (Throwable $exception) {
+            error_log('Image upload failed: ' . $exception->getMessage());
+            setFlash('error', 'The image could not be uploaded right now.');
             redirectTo('/gallery/upload');
         }
-
-        $upload = $_FILES['image'];
-
-        if (($upload['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
-            setFlash('error', 'The image could not be uploaded.');
-            redirectTo('/gallery/upload');
-        }
-
-        $temporaryPath = (string) ($upload['tmp_name'] ?? '');
-        $originalName = (string) ($upload['name'] ?? 'image');
-
-        if ($temporaryPath === '' || !is_uploaded_file($temporaryPath)) {
-            setFlash('error', 'Invalid upload data.');
-            redirectTo('/gallery/upload');
-        }
-
-        $fileInfo = new finfo(FILEINFO_MIME_TYPE);
-        $mimeType = $fileInfo->file($temporaryPath) ?: '';
-
-        if (!isset(self::ALLOWED_MIME_TYPES[$mimeType])) {
-            setFlash('error', 'Only JPEG, PNG, GIF, and WEBP images are allowed.');
-            redirectTo('/gallery/upload');
-        }
-
-        $extension = self::ALLOWED_MIME_TYPES[$mimeType];
-        $storageDirectory = __DIR__ . '/../../uploads';
-
-        if (!is_dir($storageDirectory)) {
-            mkdir($storageDirectory, 0775, true);
-        }
-
-        $storedName = sanitizeFileName($originalName) . '-' . bin2hex(random_bytes(8)) . '.' . $extension;
-        $storedPath = $storageDirectory . '/' . $storedName;
-
-        if (!move_uploaded_file($temporaryPath, $storedPath)) {
-            setFlash('error', 'The file could not be stored.');
-            redirectTo('/gallery/upload');
-        }
-
-        (new Image())->create((int) $user['id'], 'uploads/' . $storedName, $originalName, $mimeType);
-
-        setFlash('success', 'Image uploaded successfully.');
-        redirectTo('/gallery');
     }
 }

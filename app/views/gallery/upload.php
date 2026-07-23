@@ -15,11 +15,19 @@
             <div class="alert alert-error"><?php echo htmlspecialchars($error, ENT_QUOTES, 'UTF-8'); ?></div>
         <?php endif; ?>
 
+        <?php if (!empty($errors ?? [])): ?>
+            <div class="field-errors">
+                <?php foreach ($errors as $error): ?>
+                    <p><?php echo htmlspecialchars($error, ENT_QUOTES, 'UTF-8'); ?></p>
+                <?php endforeach; ?>
+            </div>
+        <?php endif; ?>
+
         <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8'); ?>">
 
         <div class="file-field">
             <label for="image">Choose image</label>
-            <input id="image" type="file" name="image" required>
+            <input id="image" type="file" name="image" accept="image/jpeg,image/png,image/gif,image/webp" required>
             <p id="selected-file">No file selected.</p>
         </div>
 

@@ -138,3 +138,9 @@ function renderView(string $viewPath, array $data = []): void
     require $viewFile;
     require __DIR__ . '/views/layouts/footer.php';
 }
+
+function renderErrorPage(int $statusCode, string $viewPath, array $data = []): void
+{
+    http_response_code($statusCode);
+    renderView($viewPath, $data);
+}
