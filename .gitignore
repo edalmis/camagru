@@ -8,3 +8,5 @@ node_modules/
 # Runtime artifacts
 uploads/*
 !uploads/.gitkeep
+sessions/*
+!sessions/.gitkeep

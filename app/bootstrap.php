@@ -123,6 +123,28 @@ function sanitizeFileName(string $fileName): string
     return $baseName === '' ? 'upload' : $baseName;
 }
 
+function appBaseUrl(): string
+{
+    $baseUrl = getenv('APP_URL');
+
+    if (!is_string($baseUrl) || trim($baseUrl) === '') {
+        return 'http://localhost:8080';
+    }
+
+    return rtrim(trim($baseUrl), '/');
+}
+
+function sendMailMessage(string $to, string $subject, string $message): bool
+{
+    $headers = [
+        'From: Camagru <no-reply@camagru.local>',
+        'Reply-To: no-reply@camagru.local',
+        'Content-Type: text/plain; charset=UTF-8',
+    ];
+
+    return mail($to, $subject, $message, implode("\r\n", $headers));
+}
+
 function renderView(string $viewPath, array $data = []): void
 {
     $viewFile = __DIR__ . '/views/' . $viewPath . '.php';

@@ -284,8 +284,6 @@ label input {
 
 input[type="text"],
 input[type="email"],
-input[type="text"],
-input[type="email"],
 input[type="password"] {
     border: 1px solid rgba(31, 27, 23, 0.12);
     border-radius: 16px;
@@ -297,19 +295,27 @@ input[type="email"]:focus,
 input[type="password"]:focus,
 input[type="file"]:focus {
     border-color: rgba(179, 92, 46, 0.45);
-input[type="password"]:focus {
+    outline: none;
 }
 
 input[type="file"] {
     padding: 12px;
     cursor: pointer;
-}
     display: block;
     width: 100%;
     margin-top: 8px;
-    padding: 0;
     border: 0;
     background: transparent;
+}
+
+.auth-form input,
+.upload-form input[type="text"],
+.upload-form input[type="email"],
+.upload-form input[type="password"],
+.upload-form input[type="file"] {
+    width: 100%;
+}
+
 .file-field {
     padding: 18px;
     margin-bottom: 18px;
@@ -432,5 +438,14 @@ input[type="file"] {
     .auth-grid > *,
     .upload-layout > * {
         width: 100%;
+    }
+
+    .hero h1,
+    .auth-panel h1,
+    .upload-intro h1,
+    .profile-card h1,
+    .empty-state h1,
+    .page-header h1 {
+        font-size: 34px;
     }
 }
