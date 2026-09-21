@@ -10,3 +10,5 @@ uploads/*
 !uploads/.gitkeep
 sessions/*
 !sessions/.gitkeep
+storage/mail/*
+!storage/mail/.gitkeep

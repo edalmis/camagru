@@ -44,6 +44,7 @@ A web application for photo manipulation and sharing.
    ```
 
    Fill in your local credentials and secrets in `.env`.
+   For email delivery, set the SMTP values in `.env` with a Gmail app password. The app does not read Gmail credentials from the login or forgot-password forms.
 
 3. **Start Docker containers**
    ```bash

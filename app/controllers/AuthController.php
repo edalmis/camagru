@@ -47,14 +47,19 @@ final class AuthController
             $verificationToken = $userModel->issueAuthToken((int) $user['id'], 'email_verify', 86400);
             $verificationLink = appBaseUrl() . '/verify-email?token=' . urlencode($verificationToken);
 
-            sendMailMessage(
+            $mailSent = sendMailMessage(
                 $user['email'],
                 'Confirm your Camagru account',
                 "Hello {$user['username']},\n\nPlease confirm your account by opening this link:\n{$verificationLink}\n\nIf you did not create this account, you can ignore this message."
             );
 
             unset($_SESSION['old']);
-            setFlash('success', 'Account created. Check your email to confirm your account before logging in.');
+            setFlash(
+                $mailSent ? 'success' : 'error',
+                $mailSent
+                    ? 'Account created. Check your email to confirm your account before logging in.'
+                    : 'Account created, but the confirmation email could not be sent. Configure Gmail SMTP and resend it from your profile.'
+            );
             redirectTo('/login');
         } catch (ValidationException $exception) {
             renderView('auth/register', [
@@ -175,13 +180,18 @@ final class AuthController
             if ($result['emailChanged']) {
                 $verificationToken = $userModel->issueAuthToken((int) $result['user']['id'], 'email_verify', 86400);
                 $verificationLink = appBaseUrl() . '/verify-email?token=' . urlencode($verificationToken);
-                sendMailMessage(
+                $mailSent = sendMailMessage(
                     $result['user']['email'],
                     'Confirm your new Camagru email address',
                     "Hello {$result['user']['username']},\n\nPlease confirm your new email address by opening this link:\n{$verificationLink}\n\nIf you did not request this change, please ignore this message."
                 );
 
-                setFlash('success', 'Profile updated. Check your new email address to confirm it.');
+                setFlash(
+                    $mailSent ? 'success' : 'error',
+                    $mailSent
+                        ? 'Profile updated. Check your new email address to confirm it.'
+                        : 'Profile updated, but the confirmation email could not be sent.'
+                );
             } else {
                 setFlash('success', 'Profile updated successfully.');
             }
@@ -257,11 +267,16 @@ final class AuthController
                 $recipient = $userModel->findByEmail($email);
 
                 if ($recipient !== null) {
-                    sendMailMessage(
+                    $mailSent = sendMailMessage(
                         $recipient['email'],
                         'Reset your Camagru password',
                         "Hello {$recipient['username']},\n\nOpen this link to choose a new password:\n{$resetLink}\n\nIf you did not request a reset, you can ignore this message."
                     );
+
+                    if (!$mailSent) {
+                        setFlash('error', 'We could not send the password reset email. Please check the Gmail SMTP configuration.');
+                        redirectTo('/forgot-password');
+                    }
                 }
             }
 
@@ -365,13 +380,18 @@ final class AuthController
             $verificationToken = $userModel->issueAuthToken((int) $user['id'], 'email_verify', 86400);
             $verificationLink = appBaseUrl() . '/verify-email?token=' . urlencode($verificationToken);
 
-            sendMailMessage(
+            $mailSent = sendMailMessage(
                 $user['email'],
                 'Confirm your Camagru account',
                 "Hello {$user['username']},\n\nPlease confirm your account by opening this link:\n{$verificationLink}\n\nIf you did not create this account, you can ignore this message."
             );
 
-            setFlash('success', 'A new confirmation email has been sent.');
+            setFlash(
+                $mailSent ? 'success' : 'error',
+                $mailSent
+                    ? 'A new confirmation email has been sent.'
+                    : 'The confirmation email could not be sent. Please check the Gmail SMTP configuration.'
+            );
             redirectTo('/profile');
         } catch (Throwable $exception) {
             error_log('Resend verification failed: ' . $exception->getMessage());
