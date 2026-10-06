@@ -16,8 +16,9 @@
 
         <nav class="nav-links" aria-label="Primary">
             <a href="/">Home</a>
+            <a href="/gallery">Gallery</a>
             <?php if (!empty($currentUser ?? null)): ?>
-                <a href="/gallery">Gallery</a>
+                <a href="/gallery/mine">My Gallery</a>
                 <a href="/gallery/upload">Upload</a>
                 <a href="/profile">Profile</a>
                 <form action="/logout" method="post" class="inline-form">

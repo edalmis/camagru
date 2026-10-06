@@ -120,6 +120,102 @@ final class Image
         return $statement->fetchAll();
     }
 
+    public function findAll(?int $viewerId = null, ?int $ownerId = null): array
+    {
+        $whereClause = '';
+        $parameters = ['viewer_id' => $viewerId ?? 0];
+
+        if ($ownerId !== null) {
+            $whereClause = ' WHERE images.user_id = :owner_id';
+            $parameters['owner_id'] = $ownerId;
+        }
+
+        $statement = $this->pdo->prepare(
+            'SELECT images.id, images.user_id, images.file_path, images.original_name, images.mime_type, images.created_at, users.username, COUNT(DISTINCT image_likes.id) AS like_count, CASE WHEN SUM(CASE WHEN image_likes.user_id = :viewer_id THEN 1 ELSE 0 END) > 0 THEN 1 ELSE 0 END AS liked_by_viewer FROM images INNER JOIN users ON users.id = images.user_id LEFT JOIN image_likes ON image_likes.image_id = images.id' . $whereClause . ' GROUP BY images.id, images.user_id, images.file_path, images.original_name, images.mime_type, images.created_at, users.username ORDER BY images.created_at DESC, images.id DESC'
+        );
+        $statement->execute($parameters);
+
+        return $statement->fetchAll();
+    }
+
+    public function findCommentsByImageIds(array $imageIds): array
+    {
+        $imageIds = array_values(array_filter(array_map('intval', $imageIds), static function (int $id): bool {
+            return $id > 0;
+        }));
+
+        if (empty($imageIds)) {
+            return [];
+        }
+
+        $placeholders = implode(',', array_fill(0, count($imageIds), '?'));
+        $statement = $this->pdo->prepare(
+            'SELECT image_comments.id, image_comments.image_id, image_comments.comment_text, image_comments.created_at, users.username FROM image_comments INNER JOIN users ON users.id = image_comments.user_id WHERE image_comments.image_id IN (' . $placeholders . ') ORDER BY image_comments.created_at ASC, image_comments.id ASC'
+        );
+        $statement->execute($imageIds);
+
+        $commentsByImage = [];
+        foreach ($statement->fetchAll() as $comment) {
+            $commentsByImage[(int) $comment['image_id']][] = $comment;
+        }
+
+        return $commentsByImage;
+    }
+
+    public function toggleLike(int $imageId, int $userId): bool
+    {
+        if ($this->findById($imageId) === null) {
+            throw new ValidationException(['That image does not exist.']);
+        }
+
+        $findLike = $this->pdo->prepare('SELECT id FROM image_likes WHERE image_id = :image_id AND user_id = :user_id LIMIT 1');
+        $findLike->execute([
+            'image_id' => $imageId,
+            'user_id' => $userId,
+        ]);
+        $like = $findLike->fetch();
+
+        if ($like !== false) {
+            $deleteLike = $this->pdo->prepare('DELETE FROM image_likes WHERE id = :id');
+            $deleteLike->execute(['id' => $like['id']]);
+            return false;
+        }
+
+        $addLike = $this->pdo->prepare('INSERT INTO image_likes (image_id, user_id) VALUES (:image_id, :user_id)');
+        $addLike->execute([
+            'image_id' => $imageId,
+            'user_id' => $userId,
+        ]);
+
+        return true;
+    }
+
+    public function addComment(int $imageId, int $userId, string $commentText): void
+    {
+        $commentText = trim($commentText);
+
+        if ($this->findById($imageId) === null) {
+            throw new ValidationException(['That image does not exist.']);
+        }
+
+        if ($commentText === '') {
+            throw new ValidationException(['Comment cannot be empty.']);
+        }
+
+        if (strlen($commentText) > 1000) {
+            throw new ValidationException(['Comments must be 1000 characters or fewer.']);
+        }
+
+        $statement = $this->pdo->prepare(
+            'INSERT INTO image_comments (image_id, user_id, comment_text) VALUES (:image_id, :user_id, :comment_text)'
+        );
+        $statement->execute([
+            'image_id' => $imageId,
+            'user_id' => $userId,
+            'comment_text' => $commentText,
+        ]);
+    }
+
     public function findById(int $id): ?array
     {
         $statement = $this->pdo->prepare(

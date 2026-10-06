@@ -6,16 +6,37 @@ final class ImageController
 {
     public function gallery(): void
     {
+        $viewer = currentUser();
+        $imageModel = new Image();
+        $images = $imageModel->findAll($viewer === null ? null : (int) $viewer['id']);
+        $comments = $imageModel->findCommentsByImageIds(array_column($images, 'id'));
+
+        renderView('gallery/index', [
+            'pageTitle' => 'Public Gallery',
+            'currentUser' => $viewer,
+            'images' => $images,
+            'comments' => $comments,
+            'success' => getFlash('success'),
+            'error' => getFlash('error'),
+            'isPublic' => true,
+        ]);
+    }
+
+    public function myGallery(): void
+    {
         $user = requireAuthentication();
-        $images = (new Image())->findByUserId((int) $user['id']);
+        $imageModel = new Image();
+        $images = $imageModel->findAll((int) $user['id'], (int) $user['id']);
+        $comments = $imageModel->findCommentsByImageIds(array_column($images, 'id'));
 
         renderView('gallery/index', [
             'pageTitle' => 'My Gallery',
             'currentUser' => $user,
             'images' => $images,
+            'comments' => $comments,
             'success' => getFlash('success'),
             'error' => getFlash('error'),
-            'csrfToken' => csrfToken(),
+            'isPublic' => false,
         ]);
     }
 
@@ -45,7 +66,7 @@ final class ImageController
             $upload = $_FILES['image'] ?? [];
             (new Image())->storeUpload((int) $user['id'], $upload);
             setFlash('success', 'Image uploaded successfully.');
-            redirectTo('/gallery');
+            redirectTo('/gallery/mine');
         } catch (ValidationException $exception) {
             renderView('gallery/upload', [
                 'pageTitle' => 'Upload Image',
@@ -59,5 +80,52 @@ final class ImageController
             setFlash('error', 'The image could not be uploaded right now.');
             redirectTo('/gallery/upload');
         }
+    }
+
+    public function like(): void
+    {
+        $user = requireAuthentication();
+
+        if (!verifyCsrfToken($_POST['csrf_token'] ?? null)) {
+            setFlash('error', 'Invalid form token. Please try again.');
+            redirectTo('/gallery');
+        }
+
+        try {
+            (new Image())->toggleLike((int) ($_POST['image_id'] ?? 0), (int) $user['id']);
+        } catch (ValidationException $exception) {
+            setFlash('error', $exception->getErrors()[0] ?? 'Unable to update like.');
+        } catch (Throwable $exception) {
+            error_log('Like update failed: ' . $exception->getMessage());
+            setFlash('error', 'Unable to update like right now.');
+        }
+
+        redirectTo('/gallery');
+    }
+
+    public function comment(): void
+    {
+        $user = requireAuthentication();
+
+        if (!verifyCsrfToken($_POST['csrf_token'] ?? null)) {
+            setFlash('error', 'Invalid form token. Please try again.');
+            redirectTo('/gallery');
+        }
+
+        try {
+            (new Image())->addComment(
+                (int) ($_POST['image_id'] ?? 0),
+                (int) $user['id'],
+                (string) ($_POST['comment_text'] ?? '')
+            );
+            setFlash('success', 'Comment added.');
+        } catch (ValidationException $exception) {
+            setFlash('error', $exception->getErrors()[0] ?? 'Unable to add comment.');
+        } catch (Throwable $exception) {
+            error_log('Comment creation failed: ' . $exception->getMessage());
+            setFlash('error', 'Unable to add comment right now.');
+        }
+
+        redirectTo('/gallery');
     }
 }

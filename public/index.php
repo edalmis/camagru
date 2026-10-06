@@ -24,6 +24,9 @@ $router->get('/profile', [$authController, 'profile']);
 $router->post('/profile', [$authController, 'updateProfile']);
 $router->post('/profile/resend-verification', [$authController, 'resendVerification']);
 $router->get('/gallery', [$imageController, 'gallery']);
+$router->get('/gallery/mine', [$imageController, 'myGallery']);
+$router->post('/gallery/like', [$imageController, 'like']);
+$router->post('/gallery/comment', [$imageController, 'comment']);
 $router->get('/gallery/upload', [$imageController, 'showUpload']);
 $router->post('/gallery/upload', [$imageController, 'storeUpload']);
 
