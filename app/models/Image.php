@@ -216,6 +216,17 @@ final class Image
         ]);
     }
 
+    public function findAuthorForNotification(int $imageId): ?array
+    {
+        $statement = $this->pdo->prepare(
+            'SELECT users.id, users.username, users.email, users.comment_email_notifications FROM images INNER JOIN users ON users.id = images.user_id WHERE images.id = :image_id LIMIT 1'
+        );
+        $statement->execute(['image_id' => $imageId]);
+        $author = $statement->fetch();
+
+        return $author ?: null;
+    }
+
     public function findById(int $id): ?array
     {
         $statement = $this->pdo->prepare(

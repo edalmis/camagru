@@ -60,6 +60,11 @@
             <input type="password" name="new_password_confirmation" minlength="8" maxlength="128" autocomplete="new-password">
         </label>
 
+        <label>
+            <input type="checkbox" name="comment_email_notifications" value="1" <?php echo !empty($currentUser['comment_email_notifications']) ? 'checked' : ''; ?>>
+            Email me when someone comments on my images
+        </label>
+
         <button class="button button-primary" type="submit">Save changes</button>
     </form>
 

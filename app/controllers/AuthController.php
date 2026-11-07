@@ -174,7 +174,8 @@ final class AuthController
 
         try {
             $userModel = new User();
-            $result = $userModel->updateProfile((int) $currentUser['id'], $username, $email, $currentPassword, $newPassword, $confirmPassword);
+            $commentEmailNotifications = !empty($_POST['comment_email_notifications']);
+            $result = $userModel->updateProfile((int) $currentUser['id'], $username, $email, $currentPassword, $newPassword, $confirmPassword, $commentEmailNotifications);
             loginUser($result['user']);
 
             if ($result['emailChanged']) {

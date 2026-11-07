@@ -113,11 +113,28 @@ final class ImageController
         }
 
         try {
-            (new Image())->addComment(
-                (int) ($_POST['image_id'] ?? 0),
+            $imageId = (int) ($_POST['image_id'] ?? 0);
+            $commentText = trim((string) ($_POST['comment_text'] ?? ''));
+            $imageModel = new Image();
+            $imageModel->addComment(
+                $imageId,
                 (int) $user['id'],
-                (string) ($_POST['comment_text'] ?? '')
+                $commentText
             );
+
+            $author = $imageModel->findAuthorForNotification($imageId);
+            if ($author !== null && (int) $author['id'] !== (int) $user['id'] && !empty($author['comment_email_notifications'])) {
+                $mailSent = sendMailMessage(
+                    $author['email'],
+                    'New comment on your Camagru image',
+                    "Hello {$author['username']},\n\n{$user['username']} commented on your image:\n\"{$commentText}\"\n\nView your gallery: " . appBaseUrl() . "/gallery/mine"
+                );
+
+                if (!$mailSent) {
+                    error_log('Comment notification email could not be sent for image ' . $imageId);
+                }
+            }
+
             setFlash('success', 'Comment added.');
         } catch (ValidationException $exception) {
             setFlash('error', $exception->getErrors()[0] ?? 'Unable to add comment.');

@@ -75,7 +75,7 @@ final class User
         return $user;
     }
 
-    public function updateProfile(int $userId, string $username, string $email, string $currentPassword, string $newPassword, string $confirmPassword): array
+    public function updateProfile(int $userId, string $username, string $email, string $currentPassword, string $newPassword, string $confirmPassword, bool $commentEmailNotifications): array
     {
         $errors = [];
         $username = trim($username);
@@ -83,6 +83,7 @@ final class User
         $currentPassword = (string) $currentPassword;
         $newPassword = (string) $newPassword;
         $confirmPassword = (string) $confirmPassword;
+        $commentEmailNotifications = $commentEmailNotifications ? 1 : 0;
         $passwordChanged = $newPassword !== '' || $confirmPassword !== '';
 
         if ($username === '' || strlen($username) < 3 || strlen($username) > 30) {
@@ -137,10 +138,11 @@ final class User
             'username' => $username,
             'email' => $email,
             'email_verified_at' => $currentUser['email'] === $email ? $currentUser['email_verified_at'] : null,
+            'comment_email_notifications' => $commentEmailNotifications,
             'id' => $userId,
         ];
 
-        $sql = 'UPDATE users SET username = :username, email = :email, email_verified_at = :email_verified_at';
+        $sql = 'UPDATE users SET username = :username, email = :email, email_verified_at = :email_verified_at, comment_email_notifications = :comment_email_notifications';
 
         if ($passwordChanged) {
             $sql .= ', password_hash = :password_hash';
@@ -235,7 +237,7 @@ final class User
 
     public function findById(int $id): ?array
     {
-        $statement = $this->pdo->prepare('SELECT id, username, email, email_verified_at, created_at FROM users WHERE id = :id LIMIT 1');
+        $statement = $this->pdo->prepare('SELECT id, username, email, email_verified_at, comment_email_notifications, created_at FROM users WHERE id = :id LIMIT 1');
         $statement->execute(['id' => $id]);
         $user = $statement->fetch();
 
@@ -244,7 +246,7 @@ final class User
 
     public function findByIdWithPassword(int $id): ?array
     {
-        $statement = $this->pdo->prepare('SELECT id, username, email, password_hash, email_verified_at, created_at FROM users WHERE id = :id LIMIT 1');
+        $statement = $this->pdo->prepare('SELECT id, username, email, password_hash, email_verified_at, comment_email_notifications, created_at FROM users WHERE id = :id LIMIT 1');
         $statement->execute(['id' => $id]);
         $user = $statement->fetch();
 
@@ -253,7 +255,7 @@ final class User
 
     public function findByEmail(string $email): ?array
     {
-        $statement = $this->pdo->prepare('SELECT id, username, email, password_hash, email_verified_at, created_at FROM users WHERE email = :email LIMIT 1');
+        $statement = $this->pdo->prepare('SELECT id, username, email, password_hash, email_verified_at, comment_email_notifications, created_at FROM users WHERE email = :email LIMIT 1');
         $statement->execute(['email' => $email]);
         $user = $statement->fetch();
 
@@ -262,7 +264,7 @@ final class User
 
     public function findByUsername(string $username): ?array
     {
-        $statement = $this->pdo->prepare('SELECT id, username, email, password_hash, email_verified_at, created_at FROM users WHERE username = :username LIMIT 1');
+        $statement = $this->pdo->prepare('SELECT id, username, email, password_hash, email_verified_at, comment_email_notifications, created_at FROM users WHERE username = :username LIMIT 1');
         $statement->execute(['username' => $username]);
         $user = $statement->fetch();
 
