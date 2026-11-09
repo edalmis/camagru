@@ -70,4 +70,18 @@
     </section>
 <?php endif; ?>
 
+<?php if (($totalPages ?? 1) > 1): ?>
+    <nav class="pagination" aria-label="Gallery pages">
+        <?php if (($page ?? 1) > 1): ?>
+            <a class="button button-secondary" href="<?php echo htmlspecialchars($galleryPath, ENT_QUOTES, 'UTF-8'); ?>?page=<?php echo (int) $page - 1; ?>">Previous</a>
+        <?php endif; ?>
+
+        <span>Page <?php echo (int) $page; ?> of <?php echo (int) $totalPages; ?></span>
+
+        <?php if (($page ?? 1) < ($totalPages ?? 1)): ?>
+            <a class="button button-secondary" href="<?php echo htmlspecialchars($galleryPath, ENT_QUOTES, 'UTF-8'); ?>?page=<?php echo (int) $page + 1; ?>">Next</a>
+        <?php endif; ?>
+    </nav>
+<?php endif; ?>
+
 <p class="helper-text">Webcam capture support will be added in a later step.</p>

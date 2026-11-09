@@ -434,6 +434,14 @@ textarea {
     display: block;
 }
 
+.pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
 @media (min-width: 881px) {
     .auth-grid > *,
     .upload-layout > * {

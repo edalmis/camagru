@@ -120,22 +120,47 @@ final class Image
         return $statement->fetchAll();
     }
 
-    public function findAll(?int $viewerId = null, ?int $ownerId = null): array
+    public function findAll(?int $viewerId = null, ?int $ownerId = null, int $page = 1, int $perPage = 6): array
     {
+        $page = max(1, $page);
+        $perPage = max(5, $perPage);
+        $offset = ($page - 1) * $perPage;
         $whereClause = '';
-        $parameters = ['viewer_id' => $viewerId ?? 0];
 
         if ($ownerId !== null) {
             $whereClause = ' WHERE images.user_id = :owner_id';
-            $parameters['owner_id'] = $ownerId;
         }
 
         $statement = $this->pdo->prepare(
-            'SELECT images.id, images.user_id, images.file_path, images.original_name, images.mime_type, images.created_at, users.username, COUNT(DISTINCT image_likes.id) AS like_count, CASE WHEN SUM(CASE WHEN image_likes.user_id = :viewer_id THEN 1 ELSE 0 END) > 0 THEN 1 ELSE 0 END AS liked_by_viewer FROM images INNER JOIN users ON users.id = images.user_id LEFT JOIN image_likes ON image_likes.image_id = images.id' . $whereClause . ' GROUP BY images.id, images.user_id, images.file_path, images.original_name, images.mime_type, images.created_at, users.username ORDER BY images.created_at DESC, images.id DESC'
+            'SELECT images.id, images.user_id, images.file_path, images.original_name, images.mime_type, images.created_at, users.username, COUNT(DISTINCT image_likes.id) AS like_count, CASE WHEN SUM(CASE WHEN image_likes.user_id = :viewer_id THEN 1 ELSE 0 END) > 0 THEN 1 ELSE 0 END AS liked_by_viewer FROM images INNER JOIN users ON users.id = images.user_id LEFT JOIN image_likes ON image_likes.image_id = images.id' . $whereClause . ' GROUP BY images.id, images.user_id, images.file_path, images.original_name, images.mime_type, images.created_at, users.username ORDER BY images.created_at DESC, images.id DESC LIMIT :limit OFFSET :offset'
         );
-        $statement->execute($parameters);
+        $statement->bindValue(':viewer_id', $viewerId ?? 0, PDO::PARAM_INT);
+
+        if ($ownerId !== null) {
+            $statement->bindValue(':owner_id', $ownerId, PDO::PARAM_INT);
+        }
+
+        $statement->bindValue(':limit', $perPage, PDO::PARAM_INT);
+        $statement->bindValue(':offset', $offset, PDO::PARAM_INT);
+        $statement->execute();
 
         return $statement->fetchAll();
+    }
+
+    public function countAll(?int $ownerId = null): int
+    {
+        $whereClause = '';
+        $parameters = [];
+
+        if ($ownerId !== null) {
+            $whereClause = ' WHERE user_id = :owner_id';
+            $parameters['owner_id'] = $ownerId;
+        }
+
+        $statement = $this->pdo->prepare('SELECT COUNT(*) FROM images' . $whereClause);
+        $statement->execute($parameters);
+
+        return (int) $statement->fetchColumn();
     }
 
     public function findCommentsByImageIds(array $imageIds): array

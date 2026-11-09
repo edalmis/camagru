@@ -8,7 +8,8 @@ final class ImageController
     {
         $viewer = currentUser();
         $imageModel = new Image();
-        $images = $imageModel->findAll($viewer === null ? null : (int) $viewer['id']);
+        $page = $this->currentPage();
+        $images = $imageModel->findAll($viewer === null ? null : (int) $viewer['id'], null, $page);
         $comments = $imageModel->findCommentsByImageIds(array_column($images, 'id'));
 
         renderView('gallery/index', [
@@ -16,6 +17,9 @@ final class ImageController
             'currentUser' => $viewer,
             'images' => $images,
             'comments' => $comments,
+            'page' => $page,
+            'totalPages' => $this->totalPages($imageModel->countAll()),
+            'galleryPath' => '/gallery',
             'success' => getFlash('success'),
             'error' => getFlash('error'),
             'isPublic' => true,
@@ -26,7 +30,8 @@ final class ImageController
     {
         $user = requireAuthentication();
         $imageModel = new Image();
-        $images = $imageModel->findAll((int) $user['id'], (int) $user['id']);
+        $page = $this->currentPage();
+        $images = $imageModel->findAll((int) $user['id'], (int) $user['id'], $page);
         $comments = $imageModel->findCommentsByImageIds(array_column($images, 'id'));
 
         renderView('gallery/index', [
@@ -34,6 +39,9 @@ final class ImageController
             'currentUser' => $user,
             'images' => $images,
             'comments' => $comments,
+            'page' => $page,
+            'totalPages' => $this->totalPages($imageModel->countAll((int) $user['id'])),
+            'galleryPath' => '/gallery/mine',
             'success' => getFlash('success'),
             'error' => getFlash('error'),
             'isPublic' => false,
@@ -144,5 +152,17 @@ final class ImageController
         }
 
         redirectTo('/gallery');
+    }
+
+    private function currentPage(): int
+    {
+        $page = filter_input(INPUT_GET, 'page', FILTER_VALIDATE_INT);
+
+        return is_int($page) && $page > 0 ? $page : 1;
+    }
+
+    private function totalPages(int $totalImages): int
+    {
+        return max(1, (int) ceil($totalImages / 6));
     }
 }
