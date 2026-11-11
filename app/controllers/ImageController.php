@@ -61,6 +61,74 @@ final class ImageController
         ]);
     }
 
+    public function editor(): void
+    {
+        $user = requireAuthentication();
+
+        renderView('gallery/editor', [
+            'pageTitle' => 'Photo Editor',
+            'currentUser' => $user,
+            'images' => (new Image())->findByUserId((int) $user['id']),
+            'csrfToken' => csrfToken(),
+            'success' => getFlash('success'),
+            'error' => getFlash('error'),
+            'overlays' => [
+                ['name' => 'Sunburst', 'key' => 'sunburst', 'path' => '/assets/overlays/sunburst.svg'],
+                ['name' => 'Sparkles', 'key' => 'sparkles', 'path' => '/assets/overlays/sparkles.svg'],
+            ],
+        ]);
+    }
+
+    public function capture(): void
+    {
+        $user = requireAuthentication();
+
+        if (!verifyCsrfToken($_POST['csrf_token'] ?? null)) {
+            setFlash('error', 'Invalid form token. Please try again.');
+            redirectTo('/editor');
+        }
+
+        try {
+            (new Image())->storeEditedImage(
+                (int) $user['id'],
+                (string) ($_POST['image_data'] ?? ''),
+                $_FILES['source_image'] ?? [],
+                (string) ($_POST['overlay_key'] ?? ''),
+                (string) ($_POST['source_name'] ?? 'Edited capture')
+            );
+            setFlash('success', 'Webcam photo saved.');
+        } catch (ValidationException $exception) {
+            setFlash('error', $exception->getErrors()[0] ?? 'The capture could not be saved.');
+        } catch (Throwable $exception) {
+            error_log('Webcam capture failed: ' . $exception->getMessage());
+            setFlash('error', 'The capture could not be saved right now.');
+        }
+
+        redirectTo('/editor');
+    }
+
+    public function deleteEditorImage(): void
+    {
+        $user = requireAuthentication();
+
+        if (!verifyCsrfToken($_POST['csrf_token'] ?? null)) {
+            setFlash('error', 'Invalid form token. Please try again.');
+            redirectTo('/editor');
+        }
+
+        try {
+            (new Image())->deleteByIdForUser((int) ($_POST['image_id'] ?? 0), (int) $user['id']);
+            setFlash('success', 'Image deleted.');
+        } catch (ValidationException $exception) {
+            setFlash('error', $exception->getErrors()[0] ?? 'Unable to delete image.');
+        } catch (Throwable $exception) {
+            error_log('Editor image deletion failed: ' . $exception->getMessage());
+            setFlash('error', 'Unable to delete image right now.');
+        }
+
+        redirectTo('/editor');
+    }
+
     public function storeUpload(): void
     {
         $user = requireAuthentication();

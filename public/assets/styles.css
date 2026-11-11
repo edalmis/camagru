@@ -255,6 +255,120 @@ button {
     margin: 0 -11px;
 }
 
+.editor-layout {
+    display: flex;
+    flex-wrap: wrap;
+    margin: 0 -11px;
+}
+
+.editor-main,
+.editor-history {
+    width: 100%;
+    padding: 28px;
+    margin: 0 11px 22px;
+}
+
+.camera-stage {
+    position: relative;
+    overflow: hidden;
+    margin-top: 22px;
+    background: #1f1b17;
+}
+
+#camera-preview,
+#capture-canvas {
+    display: block;
+    width: 100%;
+    height: auto;
+}
+
+#capture-canvas {
+    display: none;
+}
+
+#overlay-preview {
+    position: absolute;
+    top: 0;
+    left: 0;
+    display: none;
+    width: 100%;
+    height: 100%;
+}
+
+.camera-stage .helper-text {
+    padding: 10px 14px;
+    margin: 0;
+    color: #fff;
+    background: rgba(31, 27, 23, 0.75);
+}
+
+.editor-controls {
+    margin-top: 22px;
+}
+
+.overlay-picker {
+    padding: 0;
+    border: 0;
+}
+
+.overlay-picker legend {
+    margin-bottom: 12px;
+    font-weight: 700;
+}
+
+.overlay-option {
+    display: inline-flex;
+    align-items: center;
+    min-width: 100px;
+    min-height: 74px;
+    padding: 8px;
+    margin: 0 8px 8px 0;
+    border: 1px solid rgba(31, 27, 23, 0.12);
+    border-radius: 12px;
+    background: #fff;
+    cursor: pointer;
+}
+
+.overlay-option input {
+    width: auto;
+    margin: 0 8px 0 0;
+}
+
+.overlay-option img {
+    width: 42px;
+    height: 32px;
+    margin-right: 8px;
+}
+
+.editor-controls form {
+    margin-top: 12px;
+}
+
+.editor-upload-label {
+    display: block;
+    margin: 18px 0;
+}
+
+.editor-history h2 {
+    margin-top: 0;
+}
+
+.history-grid {
+    display: flex;
+    flex-wrap: wrap;
+    margin: 0 -5px;
+}
+
+.history-grid a {
+    width: 50%;
+    padding: 0 5px 10px;
+}
+
+.history-grid img {
+    width: 100%;
+    height: auto;
+}
+
 .auth-grid > *,
 .upload-layout > * {
     width: 100%;
@@ -451,6 +565,14 @@ textarea {
     .gallery-card {
         width: calc(33.333% - 20px);
     }
+
+    .editor-main {
+        width: calc(66.666% - 22px);
+    }
+
+    .editor-history {
+        width: calc(33.333% - 22px);
+    }
 }
 
 @media (max-width: 560px) {
@@ -475,7 +597,9 @@ textarea {
 
     .gallery-card,
     .auth-grid > *,
-    .upload-layout > * {
+    .upload-layout > *,
+    .editor-main,
+    .editor-history {
         width: 100%;
     }
 

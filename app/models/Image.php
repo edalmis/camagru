@@ -6,6 +6,8 @@ final class Image
 {
     private PDO $pdo;
     private const MAX_UPLOAD_BYTES = 5242880;
+    private const EDITOR_WIDTH = 640;
+    private const EDITOR_HEIGHT = 480;
 
     private const ALLOWED_MIME_TYPES = [
         'image/jpeg' => 'jpg',
@@ -108,6 +110,151 @@ final class Image
             'original_name' => $originalName,
             'mime_type' => $mimeType,
         ];
+    }
+
+    public function storeCapturedImage(int $userId, string $dataUrl): array
+    {
+        return $this->storeEditedImage($userId, $dataUrl, [], 'sunburst', 'Webcam capture');
+    }
+
+    public function storeEditedImage(int $userId, string $dataUrl, array $upload, string $overlayKey, string $originalName = 'Edited capture'): array
+    {
+        $overlayKey = trim($overlayKey);
+
+        if (!in_array($overlayKey, ['sunburst', 'sparkles'], true)) {
+            throw new ValidationException(['Please select a superposable image.']);
+        }
+
+        $imageData = $this->sourceImageData($dataUrl, $upload);
+        $sourceImage = @imagecreatefromstring($imageData);
+
+        if ($sourceImage === false) {
+            throw new ValidationException(['The source image could not be read.']);
+        }
+
+        $finalImage = imagecreatetruecolor(self::EDITOR_WIDTH, self::EDITOR_HEIGHT);
+        imagealphablending($finalImage, false);
+        imagesavealpha($finalImage, true);
+        $transparent = imagecolorallocatealpha($finalImage, 0, 0, 0, 127);
+        imagefill($finalImage, 0, 0, $transparent);
+        imagealphablending($finalImage, true);
+        imagecopyresampled($finalImage, $sourceImage, 0, 0, 0, 0, self::EDITOR_WIDTH, self::EDITOR_HEIGHT, imagesx($sourceImage), imagesy($sourceImage));
+        imagedestroy($sourceImage);
+
+        $this->drawOverlay($finalImage, $overlayKey);
+
+        $imageData = null;
+        ob_start();
+        imagepng($finalImage, null, 6);
+        $imageData = ob_get_clean();
+        imagedestroy($finalImage);
+
+        if (!is_string($imageData) || $imageData === '') {
+            throw new RuntimeException('The edited image could not be encoded.');
+        }
+
+        $storageDirectory = __DIR__ . '/../../uploads';
+        if (!is_dir($storageDirectory) && !mkdir($storageDirectory, 0775, true) && !is_dir($storageDirectory)) {
+            throw new RuntimeException('The upload directory could not be created.');
+        }
+
+        $storedName = 'edited-' . bin2hex(random_bytes(8)) . '.png';
+        $storedPath = $storageDirectory . '/' . $storedName;
+        if (file_put_contents($storedPath, $imageData, LOCK_EX) === false) {
+            throw new RuntimeException('The edited image could not be stored.');
+        }
+
+        $imageId = $this->create($userId, 'uploads/' . $storedName, sanitizeFileName($originalName) . '.png', 'image/png');
+
+        return $this->findById($imageId) ?? [
+            'id' => $imageId,
+            'user_id' => $userId,
+            'file_path' => 'uploads/' . $storedName,
+            'original_name' => sanitizeFileName($originalName) . '.png',
+            'mime_type' => 'image/png',
+        ];
+    }
+
+    public function deleteByIdForUser(int $imageId, int $userId): void
+    {
+        $image = $this->findById($imageId);
+
+        if ($image === null || (int) $image['user_id'] !== $userId) {
+            throw new ValidationException(['That image does not belong to your account.']);
+        }
+
+        $statement = $this->pdo->prepare('DELETE FROM images WHERE id = :id AND user_id = :user_id');
+        $statement->execute([
+            'id' => $imageId,
+            'user_id' => $userId,
+        ]);
+
+        $filePath = __DIR__ . '/../../' . ltrim((string) $image['file_path'], '/');
+        if (is_file($filePath)) {
+            @unlink($filePath);
+        }
+    }
+
+    private function sourceImageData(string $dataUrl, array $upload): string
+    {
+        if (!empty($upload)) {
+            if (($upload['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
+                throw new ValidationException(['The selected image could not be uploaded.']);
+            }
+
+            $temporaryPath = (string) ($upload['tmp_name'] ?? '');
+            $fileSize = (int) ($upload['size'] ?? 0);
+            if ($temporaryPath === '' || !is_uploaded_file($temporaryPath) || $fileSize <= 0 || $fileSize > self::MAX_UPLOAD_BYTES) {
+                throw new ValidationException(['Uploaded images must be valid and 5 MB or smaller.']);
+            }
+
+            $imageData = file_get_contents($temporaryPath);
+        } elseif (preg_match('/^data:image\/png;base64,(.+)$/s', trim($dataUrl), $matches)) {
+            $imageData = base64_decode($matches[1], true);
+        } else {
+            throw new ValidationException(['Please capture or upload an image.']);
+        }
+
+        if (!is_string($imageData) || strlen($imageData) === 0 || strlen($imageData) > self::MAX_UPLOAD_BYTES) {
+            throw new ValidationException(['The source image is empty, invalid, or too large.']);
+        }
+
+        $mimeType = (new finfo(FILEINFO_MIME_TYPE))->buffer($imageData);
+        if (!in_array($mimeType, ['image/jpeg', 'image/png', 'image/gif', 'image/webp'], true)) {
+            throw new ValidationException(['Only JPEG, PNG, GIF, and WEBP images are allowed.']);
+        }
+
+        return $imageData;
+    }
+
+    private function drawOverlay($image, string $overlayKey): void
+    {
+        imagesavealpha($image, true);
+        imagealphablending($image, true);
+        $gold = imagecolorallocatealpha($image, 247, 201, 72, 35);
+        $white = imagecolorallocatealpha($image, 255, 255, 255, 25);
+
+        if ($overlayKey === 'sunburst') {
+            imagesetthickness($image, 8);
+            $lines = [[320, 240, 320, 20], [320, 240, 320, 460], [320, 240, 100, 240], [320, 240, 540, 240], [320, 240, 164, 84], [320, 240, 476, 396], [320, 240, 476, 84], [320, 240, 164, 396]];
+            foreach ($lines as $line) {
+                imageline($image, $line[0], $line[1], $line[2], $line[3], $gold);
+            }
+            imageellipse($image, 320, 240, 144, 144, $white);
+            return;
+        }
+
+        $sparkles = [[112, 92, 28], [520, 110, 38], [510, 370, 28], [154, 370, 38]];
+        foreach ($sparkles as $sparkle) {
+            $points = [];
+            for ($index = 0; $index < 8; $index++) {
+                $angle = ($index * M_PI / 4) - M_PI / 2;
+                $radius = $index % 2 === 0 ? $sparkle[2] : $sparkle[2] / 3;
+                $points[] = (int) ($sparkle[0] + cos($angle) * $radius);
+                $points[] = (int) ($sparkle[1] + sin($angle) * $radius);
+            }
+            imagefilledpolygon($image, $points, 8, $white);
+        }
     }
 
     public function findByUserId(int $userId): array

@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="480" viewBox="0 0 640 480">
+<g fill="none" stroke="#f7c948" stroke-width="10" opacity=".8">
+<path d="M320 240V20M320 460V240M100 240h220M540 240H320M164 84l156 156M476 396L320 240M476 84L320 240M164 396l156-156"/>
+</g>
+<circle cx="320" cy="240" r="72" fill="none" stroke="#ffffff" stroke-width="5" opacity=".9"/>
+</svg>

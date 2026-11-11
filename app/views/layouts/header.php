@@ -19,6 +19,7 @@
             <a href="/gallery">Gallery</a>
             <?php if (!empty($currentUser ?? null)): ?>
                 <a href="/gallery/mine">My Gallery</a>
+                <a href="/editor">Create</a>
                 <a href="/gallery/upload">Upload</a>
                 <a href="/profile">Profile</a>
                 <form action="/logout" method="post" class="inline-form">
